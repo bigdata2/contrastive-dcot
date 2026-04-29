@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="description"
+        content="Fine-Tuning on Diverse Reasoning Chains Drives Within-Inference CoT Refinement in LLMs">
+    <meta name="keywords" content="DCoT, Diverse Chain of Thought, CoT">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Diverse Chain of Thought (DCoT)</title>
+
+
+    <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro" rel="stylesheet">
+
+    <link rel="stylesheet" href="./static/css/bulma.min.css">
+    <link rel="stylesheet" href="./static/css/bulma-carousel.min.css">
+    <link rel="stylesheet" href="./static/css/bulma-slider.min.css">
+    <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+    <link rel="stylesheet" href="./static/css/index.css">
+    <link rel="icon" href="./static/images/favicon.svg">
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script defer src="./static/js/fontawesome.all.min.js"></script>
+    <script src="./static/js/bulma-carousel.min.js"></script>
+    <script src="./static/js/bulma-slider.min.js"></script>
+    <script src="./static/js/index.js"></script>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+    <style>
+        .table td,
+        .table th {
+            text-align: center;
+        }
+
+        .table td.red-1 {
+            background-color: #f8d7da;
+        }
+
+        .table td.red-2 {
+            background-color: #f5b7b1;
+        }
+
+        .table td.red-3 {
+            background-color: #f1948a;
+        }
+
+        .table td.red-4 {
+            background-color: #ec7063;
+        }
+
+        .table td.red-5 {
+            background-color: #e74c3c;
+        }
+
+        .table td.green-1 {
+            background-color: #d4edda;
+        }
+
+        .table td.green-2 {
+            background-color: #a9dfbf;
+        }
+
+        .table td.green-3 {
+            background-color: #7dcea0;
+        }
+
+        .table td.green-4 {
+            background-color: #52be80;
+        }
+
+        .table td.green-5 {
+            background-color: #27ae60;
+        }
+    </style>
+</head>
+
+<body>
+
+    <section class="hero">
+        <div class="hero-body">
+            <div class="container is-max-desktop">
+                <div class="columns is-centered">
+                    <div class="column has-text-centered">
+                        <h1 class="title is-1 publication-title">Fine-Tuning on Diverse Reasoning Chains Drives
+                            Within-Inference CoT Refinement in LLMs</h1>
+                        <div class="is-size-5 publication-authors">
+                            <span class="author-block">
+                                <a href="https://haritzpuerto.github.io/">Haritz Puerto</a><sup>1</sup>,</span>
+                            <span class="author-block">
+                                Tilek Chubakov<sup>1</sup>,</span>
+                            <span class="author-block">
+                                <a href="https://www.xiaodanzhu.com/">Xiaodan Zhu</a><sup>2</sup>,
+                            </span>
+                            <span class="author-block">
+                                <a href="https://www.harishtayyarmadabushi.com/">Harish Tayyar
+                                    Madabushi</a><sup>3</sup>,
+                            </span>
+                            <span class="author-block">
+                                <a href="https://www.informatik.tu-darmstadt.de/ukp/ukp_home/head_ukp/index.en.jsp">Iryna
+                                    Gurevych</a><sup>1</sup>
+                            </span>
+                        </div>
+
+                        <div class="is-size-5 publication-authors">
+                            <span class="author-block"><sup>1</sup>UKP Lab, Technical University of Darmstadt
+                                and ATHENE National Research Center for Applied Cybersecurity</span>
+                            <span class="author-block"><sup>2</sup>Dept. of ECE & Ingenuity Labs Research Institute,
+                                Queen's
+                                University</span>
+                            <span class="author-block"><sup>3</sup>University of Bath</span>
+                        </div>
+
+                        <div class="is-size-5 publication-authors">
+                            <img src="./static/images/acl-logo.png" alt="ACL 2025 Main"
+                                style="height: 2em; vertical-align: middle;">
+                        </div>
+
+                        <div class="column has-text-centered">
+                            <div class="publication-links">
+                                <!-- PDF Link. -->
+                                <span class="link-block">
+                                    <a href="https://arxiv.org/pdf/2407.03181"
+                                        class="external-link button is-normal is-rounded is-dark">
+                                        <span class="icon">
+                                            <i class="fas fa-file-pdf"></i>
+                                        </span>
+                                        <span>Paper</span>
+                                    </a>
+                                </span>
+                                <span class="link-block">
+                                    <a href="https://arxiv.org/abs/2407.03181"
+                                        class="external-link button is-normal is-rounded is-dark">
+                                        <span class="icon">
+                                            <i class="ai ai-arxiv"></i>
+                                        </span>
+                                        <span>arXiv</span>
+                                    </a>
+                                </span>
+                                <!-- Code Link. -->
+                                <span class="link-block">
+                                    <a href="https://github.com/UKPLab/acl2025-diverse-cot"
+                                        class="external-link button is-normal is-rounded is-dark">
+                                        <span class="icon">
+                                            <i class="fab fa-github"></i>
+                                        </span>
+                                        <span>Code</span>
+                                    </a>
+                                </span>
+                                <!-- Models Link. -->
+                                <span class="link-block">
+                                    <a href="https://huggingface.co/collections/haritzpuerto/dcot-667ade6bb3c1b9aac8267b71"
+                                        class="external-link button is-normal is-rounded is-dark">
+                                        <span class="icon">🤗
+                                        </span>
+                                        <span> Models</span>
+                                    </a>
+                                </span>
+                                <!-- Dataset Link. -->
+                                <span class="link-block">
+                                    <a href="https://github.com/UKPLab/acl2025-diverse-cot/blob/main/data/dcot_collection/cot9_dataset.json"
+                                        class="external-link button is-normal is-rounded is-dark">
+                                        <span class="icon">
+                                            <i class="far fa-images"></i>
+                                        </span>
+                                        <span>Data</span>
+                                    </a>
+                                </span>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+
+    <section class="section">
+        <div class="container is-max-desktop">
+            <!-- Abstract. -->
+            <div class="columns is-centered has-text-centered">
+                <div class="column is-four-fifths">
+                    <b>TLDR:</b> Diverse Chain of Thought (DCoT) consists of requiring models to generate multiple
+                    CoTs before choosing an answer. Adding DCoT data to instruction tuning allows models to improve
+                    performance through within-inference self-refinement.
+                </div>
+            </div>
+            <div class="columns is-centered has-text-centered">
+                <div class="column is-four-fifths">
+                    <h2 class="title is-3">Abstract</h2>
+                    <div class="content has-text-justified">
+                        <p>
+                            Requiring a large language model (LLM) to generate intermediary reasoning steps, known as
+                            Chain of Thought (CoT), has been shown to be an effective way of boosting performance.
+                            Previous approaches have focused on generating multiple independent CoTs, combining them
+                            through ensembling or other post-hoc strategies to enhance reasoning.
+                        </p>
+                        <p>In this work, we
+                            introduce a novel approach where LLMs are fine-tuned to generate a sequence of Diverse
+                            Chains of Thought (DCoT) within a single inference step, which is fundamentally different
+                            from prior work that primarily operate on parallel CoT generations. DCoT allows LLMs to gain
+                            the ability to perform within-inference refinement of reasoning chains without requiring
+                            external feedback.
+                        </p>
+                        <p>
+                            Through a rigorous set of experiments spanning a wide range of tasks that
+                            require various reasoning types, we show that fine-tuning on DCoT improves performance over
+                            the CoT baseline across model families and scales (1.3B to 70B). These improvements are
+                            particularly impactful for tasks with a large result state space, such as those involving
+                            numeric answers. Our work is also significant because both quantitative analyses and manual
+                            evaluations reveal the observed gains stem from the models' ability to refine an initial
+                            reasoning chain by generating a second, improved chain within the same inference step,
+                            demonstrating previously elusive self-improvement.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <!--/ Abstract. -->
+
+            <!-- Intro Image -->
+            <div class="columns is-centered has-text-centered">
+                <div class="column is-four-fifths">
+                    <h2 class="title is-3"></h2>
+                    <div class="">
+                        <img src="./static/images/intro.png" class="" alt="Intro" />
+                    </div>
+                </div>
+            </div>
+            <!--/ Intro Image. -->
+        </div>
+    </section>
+
+
+    <section class="section">
+        <div class="container is-max-desktop">
+            <!-- Method -->
+
+            <div class="columns is-centered">
+                <div class="column is-full-width">
+                    <h2 class="title is-3">Methods</h2>
+                    <div class="content has-text-centered">
+                        <img src="./static/images/method.png" class="" alt="Method" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="columns is-centered">
+                <div class="column is-full-width">
+                    <h2 class="title is-4">Diverse Chain of Thought (DCoT)</h2>
+                    <div class="content has-text-justified">
+                        <p>
+                            We instruction-tune LLMs to generate a sequence of diverse CoTs before selecting the final
+                            answer in a
+                            single inference step at inference time. To this end, we devise a DCoT instruction template,
+                            where we
+                            introduce a set of commands (in brackets) to request the number of CoTs to generate:
+                        </p>
+                        <!-- create centered text block -->
+                        <div class="content has-text-centered">
+                            <p>
+                                <b>Prompt:</b>[Question] Question [Options] Options [Number of answers] k</br>
+                                <b>Response:</b>[Answer 1] CoT_1 [Answer 2] ... [Answer k] CoT_k [Final answer] answer
+                            </p>
+                        </div>
+                    </div>
+
+                    <h2 class="title is-4">Chain of Thought (CoT) Baseline</h2>
+                    <div class="content has-text-justified">
+                        <p>
+                            Similarly, to establish a comparable baseline, we instruction-tune the same LLMs using the
+                            more
+                            traditional CoT format.
+                            To ensure a fair comparison, we use the same reasoning chains for training.
+                            As shown in the figure above, each data point is composed of a question and a CoT, and a
+                            question may
+                            appear in more than one data point but with a different CoT.
+                            In this way, the model leverages CoT diversity at training time but, unlike in <b>DCoT</b>,
+                            it does not do
+                            so at inference time.
+                        </p>
+                    </div>
+
+                </div>
+            </div>
+            <!--/ Method -->
+
+            <!-- Data Generation -->
+            <div class="columns is-centered">
+                <div class="column is-full-width">
+                    <h2 class="title is-3">CoT Data Generation</h2>
+                    <div class="content has-text-justified">
+                        <p>
+                            We use GPT 3.5 turbo in the zero-shot setting with multiple triggers, such as <em>Let's
+                                think step by
+                                step</em> to generate CoTs.
+                            For each question, we select four random CoT triggers.
+                            We limit the number of CoTs to four to ensure that the targets fit the context window of the
+                            LLMs.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <!--/ Data Generation -->
+
+            <!-- Results -->
+            <div class="columns is-centered">
+                <div class="column is-full-width">
+                    <h2 class="title is-3">Results</h2>
+                    <div class="content has-text-justified">
+                        <p>
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Method</th>
+                                    <th>Phi 1.5 (1.3B)</th>
+                                    <th>Phi 2 (2.7B)</th>
+                                    <th>LLaMA 7B</th>
+                                    <th>LLaMA 13B</th>
+                                    <th>LLaMA 70B</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>DCoT</td>
+                                    <td><b>49.39</b></td>
+                                    <td><b>62.60</b></td>
+                                    <td><b>60.80</b></td>
+                                    <td><b>66.18</b></td>
+                                    <td>68.63</td>
+                                </tr>
+                                <tr>
+                                    <td>CoT</td>
+                                    <td>47.20</td>
+                                    <td>60.85</td>
+                                    <td>58.97</td>
+                                    <td>64.39</td>
+                                    <td>66.96</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        </p>
+
+                        <p>
+                            The table shows the average results of DCoT and CoT across 8 QA reasoning tasks.
+                            We observe that DCoT achieves consistent and significant performance gains compared to CoT
+                            across all LLM
+                            families and sizes.
+                        </p>
+
+                        <p>The datasets are:
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Dataset</th>
+                                    <th>Reasoning Type</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>ARC</td>
+                                    <td>High-School Science</td>
+                                </tr>
+                                <tr>
+                                    <td>BGQA</td>
+                                    <td>Logic</td>
+                                </tr>
+                                <tr>
+                                    <td>CoinFlip</td>
+                                    <td>State-tracking</td>
+                                </tr>
+                                <tr>
+                                    <td>ConditionalQA</td>
+                                    <td>Conditional</td>
+                                </tr>
+                                <tr>
+                                    <td>GSM8K</td>
+                                    <td>Math</td>
+                                </tr>
+                                <tr>
+                                    <td>HotpotQA</td>
+                                    <td>Explicit multli-hop</td>
+                                </tr>
+                                <tr>
+                                    <td>LCC</td>
+                                    <td>Symbolic</td>
+                                </tr>
+                                <tr>
+                                    <td>Quartz</td>
+                                    <td>Qualitative relationships</td>
+                                </tr>
+                                <tr>
+                                    <td>StrategyQA</td>
+                                    <td>Implicit multi-hop</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+
+    </section>
+
+    <!-- One Revision achieve Gains -->
+    <section class="section">
+        <div class="container is-max-desktop">
+            <div class="columns is-centered">
+                <div class="column is-full-width">
+                    <h2 class="title is-3">Just One Revision is enough to achieve Gains</h2>
+                    <div class="content has-text-justified">
+                        <p>
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Method</th>
+                                    <th>Phi 1.5</th>
+                                    <th>Phi 2</th>
+                                    <th>LL. 7B</th>
+                                    <th>LL. 13B</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>CoT</td>
+                                    <td>47.51±1.77</td>
+                                    <td>63.51±.71</td>
+                                    <td>59.30±.54</td>
+                                    <td>65.41±.91</td>
+                                </tr>
+                                <tr>
+                                    <td>DCoT@1</td>
+                                    <td>47.87±1.71</td>
+                                    <td>63.91±2.58</td>
+                                    <td>61.28±.50</td>
+                                    <td>65.80±.44</td>
+                                </tr>
+                                <tr>
+                                    <td>DCoT@2</td>
+                                    <td><b>48.63±.67 &#8593;</b></td>
+                                    <td><b>65.33±2.80 &#8593;</b></td>
+                                    <td><b>62.46±.45 &#8593;</b></td>
+                                    <td><b>67.30±.49 &#8593;</b></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        </p>
+                        <p>
+                            The table shows that a single revision (DCoT@2) consistently improves performance over both
+                            CoT and DCoT@1 across all models.
+                        </p>
+                        <p>DCoT@1 has a similar performance to CoT, which shows that <em>DCoT is a safe replace to CoT
+                                in regular instruction-tuning datasets.</em></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="examples">
+        <div class="container is-max-desktop">
+            <div class="columns is-centered">
+                <div class="column is-full-width">
+                    <h2 class="title is-3">Examples</h2>
+                    <div class="content has-text-justified">
+                        <p>
+                            Below are example prompts and model responses illustrating how CoTs are refined
+                            (within-inference) by DCoT. Text in <span style="color:#e67e22;">orange</span> indicates an
+                            error. Text in <span style="color:#2980b9;">blue</span> indicates the correction.
+                        </p>
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th class="col-3">Prompt</th>
+                                    <th class="col-6">DCoT Response</th>
+                                    <th class="col-3">Explanation</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <b>Question:</b> Take the last letters of each words in “Billie Paloma Tanner
+                                        Raul” and concatenate them.<br>
+                                    </td>
+                                    <td>
+                                        <div class="dcot-example">
+                                            <div class="mb-2">
+                                                <strong>[Answer 1]</strong>
+                                                <ol class="mb-1" style="margin-left: 1em;">
+                                                    <li>Write down the words: <b>Billie Paloma Tanner Raul</b></li>
+                                                    <li>Take the last letter of the first word "Billie", which is
+                                                        "e".</li>
+                                                    <li>Take the last letter of the second word "Paloma", which is "a".
+                                                    </li>
+                                                    <li>Take the last letter of the third word "Tanner", which is "r".
+                                                    </li>
+                                                    <li>Take the last letter of the fourth word "Raul", which is "l".
+                                                    </li>
+                                                    <li>Concatenate these letters together: <b><span
+                                                                style="color:#e67e22;">"earl"</span></b>.</li>
+                                                </ol>
+                                            </div>
+                                            <div class="mb-2">
+                                                <strong>[Answer 2]</strong>
+                                                <ol class="mb-1" style="margin-left: 1em;">
+                                                    <li>The last letter of "Billie" is "e".</li>
+                                                    <li>The last letter of "Paloma" is "a".</li>
+                                                    <li>The last letter of "Tanner" is "r".</li>
+                                                    <li>The last letter of "Raul" is "l".</li>
+                                                    <li>Concatenating these letters, we get <b>"earl"</b>. Therefore,
+                                                        the
+                                                        answer is<b><span style="color:#2980b9;">"earl"</span></b>.
+                                                    </li>
+                                                </ol>
+                                            </div>
+                                            <div>
+                                                <strong>[Final answer]</strong>
+                                                <span style="color:#2980b9; font-weight:bold;">earl</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <p>
+                                            1st and 2nd CoTs are the same but the 1st CoT makes an error when generating
+                                            the answer. 2nd CoT corrects that.
+                                        </p>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <b>Question: </b>Cornelia likes to travel. She visited already 42 different
+                                        countries. 20 of them were in Europe and 10 in South America. From the rest of
+                                        the countries, only half of them were in Asia. How many Asian countries has
+                                        Cornelia visited?<br>
+                                    </td>
+                                    <td>
+                                        <div class="dcot-example">
+                                            <div class="mb-2">
+                                                <strong>[Answer 1]</strong>
+                                                <ol class="mb-1" style="margin-left: 1em;">
+                                                    <li>We know that Cornelia visited <b>42 countries</b> in total.</li>
+                                                    <li>She visited <b>20 countries in Europe</b> and <b>10 in South
+                                                            America</b>.</li>
+                                                    <li style="color:#e67e22;">Therefore, the remaining countries are:
+                                                        42 - 20 - 10 = <b>12</b>.</li>
+                                                    <li style="color:#e67e22;">Of these, only half were in Asia: 12 / 2
+                                                        = <b>6</b>.</li>
+                                                    <li style="color:#e67e22;">Therefore, Cornelia visited <b>6 Asian
+                                                            countries</b> in total.</li>
+                                                </ol>
+                                            </div>
+                                            <div class="mb-2">
+                                                <strong>[Answer 2]</strong>
+                                                <ol class="mb-1" style="margin-left: 1em;">
+                                                    <li>First, add up the countries visited in Europe and South America:
+                                                        20 + 10 = <b>30</b>.</li>
+                                                    <li style="color:#2980b9;">Subtract from the total: 42 - 30 =
+                                                        <b>12</b> countries outside Europe and South America.
+                                                    </li>
+                                                    <li style="color:#2980b9;">Only half of these were in Asia: 12 / 2 =
+                                                        <b>6</b>.
+                                                    </li>
+                                                    <li style="color:#2980b9;">So, Cornelia visited <b>6 Asian
+                                                            countries</b>.</li>
+                                                </ol>
+                                            </div>
+                                            <div>
+                                                <strong>[Final answer]</strong>
+                                                <span style="color:#2980b9; font-weight:bold;">6</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <p>
+                                            2nd CoT shows a different reasoning pattern and yields the correct answer.
+                                        </p>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="BibTeX">
+        <div class="container is-max-desktop content">
+            <h2 class="title">BibTeX</h2>
+            <pre><code>@misc{puerto2024dcot,
+    title={Fine-Tuning on Diverse Reasoning Chains Drives Within-Inference CoT Refinement in LLMs}, 
+    author={Haritz Puerto and Tilek Chubakov and Xiaodan Zhu and Harish Tayyar Madabushi and Iryna Gurevych},
+    year={2024},
+    eprint={2407.03181},
+    archivePrefix={arXiv},
+    primaryClass={cs.CL},
+    url={https://arxiv.org/abs/2407.03181}, 
+    note={To appear in ACL 2025 Main Conference}
+}
+            </code></pre>
+        </div>
+    </section>
+
+
+    <footer class="footer">
+        <div class="container">
+            <div class="content has-text-centered">
+                <a class="icon-link" href="https://arxiv.org/pdf/2407.03181">
+                    <i class="fas fa-file-pdf"></i>
+                </a>
+                <a class="icon-link" href="https://github.com/UKPLab/acl2025-diverse-cot" class="external-link"
+                    disabled>
+                    <i class="fab fa-github"></i>
+                </a>
+            </div>
+            <div class="columns is-centered">
+                <div class="column is-8">
+                    <div class="content">
+                        <p>This website is based on <a href="https://nerfies.github.io">Nerfies</a>
+                            and licensed under a <a rel="license"
+                                href="http://creativecommons.org/licenses/by-sa/4.0/">Creative
+                                Commons Attribution-ShareAlike 4.0 International License</a>.
+                        </p>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,86 @@
+/Users/anurag/paper/acl2025-diverse-cot/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+
+========================================================================
+Loading tokenizer + tiny model
+========================================================================
+  model:  distilgpt2
+  device: mps
+  data:   /Users/anurag/paper/acl2025-diverse-cot/data/dcot_collection/cot9_dataset.json
+
+========================================================================
+Building 4 contrastive examples
+========================================================================
+Contrastive Data (DCoT correct-only mixed with wrong-then-right)
+Map:   0%|          | 0/35334 [00:00<?, ? examples/s]Map:  42%|████▏     | 15000/35334 [00:00<00:00, 138923.80 examples/s]Map:  96%|█████████▌| 34000/35334 [00:00<00:00, 151120.85 examples/s]Map: 100%|██████████| 35334/35334 [00:00<00:00, 150338.14 examples/s]
+  total examples in mixed set:    35334
+  contrastive (with neg_span):    3302
+  using:                          4
+
+========================================================================
+CHECK 1 - Mask sanity (decode UL-masked tokens, compare to wrong CoT)
+========================================================================
+
+  Example 0: 159 tokens masked
+    decoded   : ', we need to determine how many boxes of coffee pods Sharon will need for her entire vacation. \n\nShe has 3 cups of coffee every morning, and she will be there f'
+    expected  : 'First, we need to determine how many boxes of coffee pods Sharon will need for her entire vacation. \n\nShe has 3 cups of coffee every morning, and she will be th'
+    EXACT MATCH: False
+
+  Example 1: 243 tokens masked
+    decoded   : ') Change of state: This is a physical change, not a chemical change. For example, when water changes from a liquid to a gas, it is still water in a different st'
+    expected  : 'A) Change of state: This is a physical change, not a chemical change. For example, when water changes from a liquid to a gas, it is still water in a different s'
+    EXACT MATCH: False
+
+  Example 2: 184 tokens masked
+    decoded   : "'s first calculate the total number of eggs Mortdecai collects in a week.\n\nMortdecai collects 8 dozen eggs every Tuesday and Thursday, which means he collects a"
+    expected  : "let's first calculate the total number of eggs Mortdecai collects in a week.\n\nMortdecai collects 8 dozen eggs every Tuesday and Thursday, which means he collect"
+    EXACT MATCH: False
+
+  Example 3: 390 tokens masked
+    decoded   : '1: Define job security\nJob security refers to the level of assurance an employee has that they will not lose their job due to factors beyond their control, such'
+    expected  : 'Step 1: Define job security\nJob security refers to the level of assurance an employee has that they will not lose their job due to factors beyond their control,'
+    EXACT MATCH: False
+
+  Mask sanity: FAIL
+  -> Common cause: tokenizer is not fast (offset_mapping unavailable)
+     or the prompt/response concatenation lost the neg_span boundary.
+
+========================================================================
+CHECK 2 - Overfit one batch (300 steps, alpha=1.0)
+========================================================================
+  Expected: NLL drops a lot; UL stays finite; total loss decreases.
+  step    0  NLL=2.3861  UL=0.9087  total=3.2948
+  step   30  NLL=0.0740  UL=0.0017  total=0.0757
+  step   60  NLL=0.0246  UL=0.0002  total=0.0248
+  step   90  NLL=0.0168  UL=0.0001  total=0.0169
+  step  120  NLL=0.0362  UL=0.0003  total=0.0366
+  step  150  NLL=0.0078  UL=0.0001  total=0.0079
+  step  180  NLL=0.0033  UL=0.0000  total=0.0033
+  step  210  NLL=0.0027  UL=0.0000  total=0.0028
+  step  240  NLL=0.0074  UL=0.0000  total=0.0074
+  step  270  NLL=0.0072  UL=0.0000  total=0.0072
+  step  299  NLL=0.0007  UL=0.0000  total=0.0007
+
+  NLL  : 2.386 -> 0.001   drop=+2.385
+  UL   : 0.909 -> 0.000    finite throughout=True
+  Verdict: PASS
+
+========================================================================
+CHECK 3 - Format preservation (greedy generation)
+========================================================================
+  prompt suffix : ...'on coffee to last her for the entire vacation?\n[Number of answers] 2\n[Answer 1] '
+  completion    : ']]]]]]]]]]]]]]]]]]]]]]]]]]]]]'
+  contains [Answer 2]      : False
+  contains [Final answer]  : False
+  Verdict: FAIL (model is small; partial pass OK)
+
+========================================================================
+SUMMARY
+========================================================================
+  CHECK 1 (mask sanity)        : FAIL
+  CHECK 2 (one-batch overfit)  : PASS
+  CHECK 3 (format preserved)   : see note
+
+If 1 and 2 pass, you can run training_script.py --contrastive on the A100.
+CHECK 3 is informative but distilgpt2 may not learn the markers in 300 steps.
+That alone is not a reason to delay scaling up.

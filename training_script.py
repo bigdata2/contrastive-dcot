@@ -105,7 +105,8 @@ def train(train_hf, tokenizer, ARGS):
         evaluation_strategy="no",
         save_strategy="steps",
         save_steps=int(len(train_hf)/ARGS.training_batch_size / ARGS.epochs),
-        logging_strategy="no",
+        logging_strategy="steps",
+        logging_steps=50,
         gradient_checkpointing=gradient_checkpointing,
     )
     print("Save every ", int(len(train_hf)/ARGS.training_batch_size / ARGS.epochs), " steps")

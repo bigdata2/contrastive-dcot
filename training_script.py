@@ -57,20 +57,20 @@ def train(train_hf, tokenizer, ARGS):
     # #Load Datasets
 
     compute_dtype = getattr(torch, bnb_4bit_compute_dtype)
-    # bnb_config = BitsAndBytesConfig(
-    #     load_in_4bit=use_4bit,
-    #     bnb_4bit_quant_type=bnb_4bit_quant_type,
-    #     bnb_4bit_compute_dtype=compute_dtype,
-    #     bnb_4bit_use_double_quant=use_nested_quant,
-    # )
-    # model = AutoModelForCausalLM.from_pretrained(
-    #     ARGS.base_model_path, quantization_config=bnb_config, device_map=device_map
-    # )
-    model = AutoModelForCausalLM.from_pretrained(
-        ARGS.base_model_path,
-        load_in_8bit=True,
-        device_map="auto",
+    bnb_config = BitsAndBytesConfig(
+        load_in_4bit=use_4bit,
+        bnb_4bit_quant_type=bnb_4bit_quant_type,
+        bnb_4bit_compute_dtype=compute_dtype,
+        bnb_4bit_use_double_quant=use_nested_quant,
     )
+    model = AutoModelForCausalLM.from_pretrained(
+        ARGS.base_model_path, quantization_config=bnb_config, device_map="auto"
+    )
+    # model = AutoModelForCausalLM.from_pretrained(
+    #     ARGS.base_model_path,
+    #     load_in_8bit=True,
+    #     device_map="auto",
+    # )
     # torch_dtype=torch.float16,
     # model.config.use_cache = False
     # model.config.pretraining_tp = 1

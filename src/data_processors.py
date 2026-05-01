@@ -119,6 +119,11 @@ class DataProcessor:
             self.ccot_dataset = self.create_contrastive_dataset(
                 self.raw_dataset, eos, epochs, chat_format
             )
+            dcot_count = sum(1 for d in self.ccot_dataset if not d.get("neg_span"))
+            contrast_count = sum(1 for d in self.ccot_dataset if d.get("neg_span"))
+            print(f"  DCoT examples:        {dcot_count}")
+            print(f"  Contrastive examples: {contrast_count}")
+            print(f"  Total:                {len(self.ccot_dataset)}  (ratio {dcot_count/max(contrast_count,1):.1f}:1)")
         else:
             raise ValueError(
                 "Invalid mode. Choose from 'dcot', 'cot', 'contrastive'"
@@ -215,8 +220,7 @@ class DataProcessor:
                 # (b) Contrastive example: wrong-then-right at k=2, only added
                 # when an incorrect CoT is available for this question.
                 incorrects = x.get("incorrect_cots", [])
-                if incorrects:
-                    wrong = random.choice(incorrects)
+                for wrong in incorrects:
                     right = random.choice(corrects)
                     dp = self.create_contrastive_data_point(
                         question,

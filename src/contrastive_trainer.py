@@ -185,6 +185,13 @@ class ContrastiveTrainer(Trainer):
         else:
             shift_ul = torch.zeros_like(shift_labels)
 
+        # Cast to float32 before any loss computation.
+        # 8-bit (and 4-bit) quantized models produce logits in float16; with
+        # phi-2's 51 200-token vocabulary, softmax over float16 overflows to NaN.
+        # Upcasting here fixes the NaN without changing the backward graph because
+        # the cast is outside the model's own compute graph.
+        shift_logits = shift_logits.float()
+
         # Per-token NLL (positions where labels != -100).
         ce = F.cross_entropy(
             shift_logits.reshape(-1, shift_logits.size(-1)),
@@ -203,7 +210,7 @@ class ContrastiveTrainer(Trainer):
         neg_mask = shift_ul.float()
         if neg_mask.sum() > 0:
             shift_input_ids = inputs["input_ids"][..., 1:].contiguous()
-            log_probs = F.log_softmax(shift_logits, dim=-1)
+            log_probs = F.log_softmax(shift_logits, dim=-1)  # already float32
             target_lp = log_probs.gather(
                 -1, shift_input_ids.unsqueeze(-1)
             ).squeeze(-1)

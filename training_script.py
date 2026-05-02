@@ -68,8 +68,6 @@ def train(train_hf, tokenizer, ARGS):
         quantization_config=bnb_config,
         device_map="auto",
     )
-    model.enable_input_require_grads()  # required for gradient flow through frozen weights + gradient checkpointing
-
     peft_config = LoraConfig(
         lora_alpha=lora_alpha,
         lora_dropout=lora_dropout,
@@ -101,6 +99,7 @@ def train(train_hf, tokenizer, ARGS):
         logging_strategy="steps",
         logging_steps=10,
         gradient_checkpointing=gradient_checkpointing,
+        gradient_checkpointing_kwargs={"use_reentrant": False},
     )
     print("Save every ", int(len(train_hf)/ARGS.training_batch_size / ARGS.epochs), " steps")
     if ARGS.contrastive:
@@ -113,6 +112,11 @@ def train(train_hf, tokenizer, ARGS):
         # Apply LoRA explicitly (SFTTrainer normally does this for us).
         model = get_peft_model(model, peft_config)
         model.print_trainable_parameters()
+        # enable_input_require_grads must be called AFTER get_peft_model in peft>=0.13:
+        # get_peft_model wraps the model and the hook must attach to the wrapper.
+        # Calling it before causes a conflicting hook on the unwrapped model that
+        # produces NaN gradients with gradient checkpointing.
+        model.enable_input_require_grads()
 
         collator = ContrastiveCollator(
             tokenizer=tokenizer, max_length=max_seq_length

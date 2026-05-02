@@ -13,7 +13,7 @@ from datasets import load_dataset
 from evaluate import load
 from sklearn.metrics import classification_report, confusion_matrix
 from tqdm import tqdm, trange
-# from vllm.lora.request import LoRARequest
+from vllm.lora.request import LoRARequest
 
 from .data_processors import Prompt
 

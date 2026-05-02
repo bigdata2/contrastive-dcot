@@ -102,7 +102,7 @@ def train(train_hf, tokenizer, ARGS):
         group_by_length=group_by_length,
         lr_scheduler_type=lr_scheduler_type,
         report_to="none",
-        evaluation_strategy="no",
+        eval_strategy="no",
         save_strategy="steps",
         save_steps=int(len(train_hf)/ARGS.training_batch_size / ARGS.epochs),
         logging_strategy="steps",

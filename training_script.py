@@ -173,12 +173,13 @@ def get_training_set(ARGS, eos_token):
         raise Exception("Need to set one of these modes: DCoT, CoT, contrastive")
     
     dataset_processor = DataProcessor(
-        ARGS.train_path, 
-        mode=mode, 
-        eos=eos_token, 
-        epochs=ARGS.epochs, 
-        seed=ARGS.seed, 
-        chat_format=ARGS.chat_format, 
+        ARGS.train_path,
+        mode=mode,
+        eos=eos_token,
+        epochs=ARGS.epochs,
+        seed=ARGS.seed,
+        chat_format=ARGS.chat_format,
+        neg_k=ARGS.neg_k,
     )
     train_hf = dataset_processor.get_hf_dataset()
     return train_hf
@@ -222,6 +223,12 @@ def parse_args():
         default=1.0,
         help="Weight on the unlikelihood term (0 disables it; ablate over "
              "{0.25, 0.5, 1.0, 2.0}).",
+    )
+    parser.add_argument(
+        "--neg_k",
+        type=int,
+        default=-1,
+        help="Number of incorrect CoTs to sample per question (-1 = all available).",
     )
     args = parser.parse_args()
     return args

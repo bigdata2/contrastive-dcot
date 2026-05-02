@@ -99,6 +99,7 @@ class DataProcessor:
         epochs=1,
         seed=42,
         chat_format=None,
+        neg_k=-1,
     ):
         random.seed(seed)
         with open(dataset_path, "r", encoding="utf-8") as f:
@@ -117,13 +118,9 @@ class DataProcessor:
         elif mode == DataProcessorMode.CONTRASTIVE:
             print("Contrastive Data (DCoT correct-only mixed with wrong-then-right)")
             self.ccot_dataset = self.create_contrastive_dataset(
-                self.raw_dataset, eos, epochs, chat_format
+                self.raw_dataset, eos, epochs, chat_format, neg_k
             )
-            dcot_count = sum(1 for d in self.ccot_dataset if not d.get("neg_span"))
-            contrast_count = sum(1 for d in self.ccot_dataset if d.get("neg_span"))
-            print(f"  DCoT examples:        {dcot_count}")
-            print(f"  Contrastive examples: {contrast_count}")
-            print(f"  Total:                {len(self.ccot_dataset)}  (ratio {dcot_count/max(contrast_count,1):.1f}:1)")
+            print(f"  neg_k={neg_k if neg_k > 0 else 'all'} → {len(self.ccot_dataset)} contrastive examples")
         else:
             raise ValueError(
                 "Invalid mode. Choose from 'dcot', 'cot', 'contrastive'"
@@ -180,7 +177,7 @@ class DataProcessor:
             ccot_dataset.extend(epoch_samples)
         return ccot_dataset
 
-    def create_contrastive_dataset(self, dataset, eos, epochs, chat_format):
+    def create_contrastive_dataset(self, dataset, eos, epochs, chat_format, neg_k=-1):
         """
         Build a training set that mixes:
           (a) DCoT-style examples (correct-only, identical to create_ccot_dataset)
@@ -200,27 +197,17 @@ class DataProcessor:
             epoch_samples = []
             for x in dataset:
                 corrects = x.get("correct_cots", [])
-                if not corrects:
+                incorrects = x.get("incorrect_cots", [])
+                if not corrects or not incorrects:
                     continue
                 question = x["question"]
                 context = None if "context" not in x else x["context"]
                 options = None if "options" not in x else x["options"]
                 answer = x["answer"]
 
-                # (a) DCoT-style examples (identical to create_ccot_dataset).
-                list_cots = [cot["cot"] for cot in corrects]
-                ccot_pairs = self.get_permutations(list_cots)
-                for ccot in ccot_pairs:
-                    dp = self.create_ccot_data_point(
-                        question, context, options, ccot, answer, eos, chat_format
-                    )
-                    dp["neg_span"] = ""  # standard NLL on the whole response
-                    epoch_samples.append(dp)
-
-                # (b) Contrastive example: wrong-then-right at k=2, only added
-                # when an incorrect CoT is available for this question.
-                incorrects = x.get("incorrect_cots", [])
-                for wrong in incorrects:
+                # Contrastive examples: sample neg_k incorrect CoTs (-1 = all available).
+                selected = incorrects if neg_k <= 0 else random.sample(incorrects, min(neg_k, len(incorrects)))
+                for wrong in selected:
                     right = random.choice(corrects)
                     dp = self.create_contrastive_data_point(
                         question,

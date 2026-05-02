@@ -26,12 +26,8 @@ from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
     BitsAndBytesConfig,
-    HfArgumentParser,
-    StoppingCriteria,
-    StoppingCriteriaList,
     TrainingArguments,
     logging,
-    pipeline,
 )
 from trl import SFTTrainer
 
@@ -66,16 +62,13 @@ def train(train_hf, tokenizer, ARGS):
 
     # #Load Datasets
 
-    compute_dtype = getattr(torch, bnb_4bit_compute_dtype)
+    bnb_config = BitsAndBytesConfig(load_in_8bit=True)
     model = AutoModelForCausalLM.from_pretrained(
         ARGS.base_model_path,
-        load_in_8bit=True,
+        quantization_config=bnb_config,
         device_map="auto",
     )
     model.enable_input_require_grads()  # required for gradient flow through frozen weights + gradient checkpointing
-    # torch_dtype=torch.float16,
-    # model.config.use_cache = False
-    # model.config.pretraining_tp = 1
 
     peft_config = LoraConfig(
         lora_alpha=lora_alpha,

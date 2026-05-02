@@ -205,23 +205,30 @@ class DataProcessor:
                 options = None if "options" not in x else x["options"]
                 answer = x["answer"]
 
-                # Contrastive examples: sample neg_k incorrect CoTs (-1 = all available).
                 selected = incorrects if neg_k <= 0 else random.sample(incorrects, min(neg_k, len(incorrects)))
                 for wrong in selected:
                     right = random.choice(corrects)
+                    # Randomly place the wrong CoT at Answer 1 or Answer 2 with equal
+                    # probability. This eliminates position bias and covers both inference
+                    # distributions without needing separate DCoT examples:
+                    #   wrong@1: model learns to self-correct (wrong -> correct)
+                    #   wrong@2: model sees correct Answer 1 and avoids wrong patterns at Answer 2
+                    # UL suppresses wrong-CoT tokens at whichever position they appear.
+                    if random.random() < 0.5:
+                        ans1, ans2 = wrong["cot"], right["cot"]
+                    else:
+                        ans1, ans2 = right["cot"], wrong["cot"]
                     dp = self.create_contrastive_data_point(
-                        question,
-                        context,
-                        options,
-                        wrong["cot"],
-                        right["cot"],
-                        answer,
-                        eos,
-                        chat_format,
+                        question, context, options,
+                        ans1, ans2, wrong["cot"], answer, eos, chat_format,
                     )
                     epoch_samples.append(dp)
             random.shuffle(epoch_samples)
             contrast_dataset.extend(epoch_samples)
+
+        n_wrong1 = sum(1 for d in contrast_dataset if d["response"].startswith(d["neg_span"][:20]))
+        print(f"  neg_k={neg_k if neg_k > 0 else 'all'} → {len(contrast_dataset)} contrastive examples "
+              f"(~{n_wrong1} wrong@Answer1, ~{len(contrast_dataset)-n_wrong1} wrong@Answer2)")
         return contrast_dataset
 
     def create_contrastive_data_point(
@@ -229,18 +236,22 @@ class DataProcessor:
         question,
         context,
         options,
-        wrong_cot,
-        right_cot,
+        ans1_cot,
+        ans2_cot,
+        neg_span,
         answer,
         eos,
         chat_format,
     ):
         """
-        Build one contrastive training example. The prompt always uses k=2 so
-        the response slot expects two CoTs followed by [Final answer]. The
-        prompt ends with "[Answer 1] " (see Prompt.base_format), so wrong_cot
-        becomes the Answer-1 content directly. The response below provides
-        Answer 2 and the final answer in the standard format.
+        Build one contrastive training example.
+
+        ans1_cot  : text to place at Answer 1 (may be wrong or correct CoT).
+        ans2_cot  : text to place at Answer 2 (may be correct or wrong CoT).
+        neg_span  : the wrong CoT text (used by the collator to locate UL tokens
+                    via character offsets, regardless of which answer position it
+                    occupies). NLL and UL co-exist at neg_span positions per
+                    Welleck et al. (2019) Eq. (4).
         """
         prompt = str(
             Prompt(
@@ -252,14 +263,11 @@ class DataProcessor:
             )
         )
         response = (
-            f"{wrong_cot}\n"
-            f"[Answer 2] {right_cot}\n"
+            f"{ans1_cot}\n"
+            f"[Answer 2] {ans2_cot}\n"
             f"\n[Final answer] {answer} {eos}"
         )
-        # neg_span is the substring of the response on which the trainer applies
-        # the unlikelihood loss (instead of NLL). The collator locates this span
-        # by character offsets to be robust to BPE token boundaries.
-        return {"prompt": prompt, "response": response, "neg_span": wrong_cot}
+        return {"prompt": prompt, "response": response, "neg_span": neg_span}
 
     def create_cot_dataset(self, dataset, eos, epochs, chat_format):
         cot_dataset = []

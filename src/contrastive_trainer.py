@@ -96,11 +96,15 @@ class ContrastiveCollator:
                     # Any overlap with [neg_start, neg_end).
                     if e > neg_start and s < neg_end:
                         ul_mask[i] = 1
-                # Tokens flagged for UL must NOT also receive NLL: zero their
-                # label so cross-entropy ignores them (we'll apply UL instead).
-                for i in range(T):
-                    if ul_mask[i] == 1:
-                        labels[i] = self.label_pad_token_id
+                # NLL and UL co-exist at neg_span positions per Welleck et al. (2019)
+                # Eq. (4): L = -log p(x*) [NLL on correct token] + UL on negative candidates.
+                # Zeroing labels here creates a void with no positive gradient, which causes
+                # the model to fall into degenerate attractors ([[[[) because UL without NLL
+                # has no target to anchor generation. Keeping labels intact means the wrong-CoT
+                # tokens get NLL (model learns to generate fluent Answer-1 text) AND UL
+                # (those same tokens are gently suppressed). The two gradients partially cancel,
+                # resulting in reduced-but-nonzero probability for wrong-CoT patterns.
+                # This is the paper's intent: maintain fluency while discouraging known-wrong tokens.
 
         return {
             "input_ids": input_ids,

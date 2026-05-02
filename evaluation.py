@@ -66,7 +66,7 @@ def run_self_consistency(ARGS):
                                      stop=ARGS.stopwords)
     enable_lora = ARGS.lora_path is not None
     llm = LLM(model=ARGS.base_model_path, enable_lora=enable_lora, max_lora_rank=64,
-              enforce_eager=True, gpu_memory_utilization=0.95, max_model_len=4096,
+              enforce_eager=True, gpu_memory_utilization=0.95, max_model_len=2048,
               max_num_seqs=16)
     benchmark = BenchmarkEvaluator(ARGS.split, k=ARGS.self_consistency_prompt_k, chat_format=ARGS.chat_format)
     if enable_lora:
@@ -97,7 +97,7 @@ if __name__ == "__main__":
         sampling_params = SamplingParams(temperature=ARGS.temperature, max_tokens=ARGS.max_tokens, stop=ARGS.stopwords)
         enable_lora = ARGS.lora_path is not None
         llm = LLM(model=ARGS.base_model_path, enable_lora=enable_lora, max_lora_rank=64,
-              enforce_eager=True, gpu_memory_utilization=0.95, max_model_len=4096,
+              enforce_eager=True, gpu_memory_utilization=0.95, max_model_len=2048,
               max_num_seqs=16)
         if ARGS.split == "test" and ARGS.tasks2k_path is not None:
             with open(ARGS.tasks2k_path) as f:

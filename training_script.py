@@ -150,7 +150,7 @@ def train(train_hf, tokenizer, ARGS):
             packing=packing,
         )
     print("Training started...")
-    trainer.train()
+    trainer.train(resume_from_checkpoint=ARGS.resume_from_checkpoint)
     trainer.model.save_pretrained(ARGS.lora_path)
     if ARGS.merge_weights:
         model = trainer.model.merge_and_unload()
@@ -203,6 +203,9 @@ def parse_args():
     parser.add_argument("--training_batch_size", type=int, default=1)
     parser.add_argument("--epochs", type=int, default=1)
     parser.add_argument("--save_steps", type=int)
+    parser.add_argument("--resume_from_checkpoint", type=str, default=None,
+                        help="Path to a checkpoint directory to resume training from, "
+                             "e.g. outputs/lora/checkpoint-1238")
     parser.add_argument("--chat_format", type=str, help="Options: llama_chat_simple, llama_chat_v2, llama_cot_chat, None")
     parser.add_argument("--merge_weights", action="store_true")
     parser.add_argument("--k", type=int, help="Number of chains to generate for eval")

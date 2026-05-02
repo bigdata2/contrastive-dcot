@@ -95,13 +95,14 @@ def train(train_hf, tokenizer, ARGS):
         report_to="none",
         eval_strategy="no",
         save_strategy="steps",
-        save_steps=int(len(train_hf)/ARGS.training_batch_size / ARGS.epochs),
+        save_steps=ARGS.save_steps if ARGS.save_steps is not None else int(len(train_hf)/ARGS.training_batch_size / ARGS.epochs),
         logging_strategy="steps",
         logging_steps=10,
         gradient_checkpointing=gradient_checkpointing,
         gradient_checkpointing_kwargs={"use_reentrant": False},
     )
-    print("Save every ", int(len(train_hf)/ARGS.training_batch_size / ARGS.epochs), " steps")
+    effective_save_steps = ARGS.save_steps if ARGS.save_steps is not None else int(len(train_hf)/ARGS.training_batch_size / ARGS.epochs)
+    print("Save every ", effective_save_steps, " steps")
     if ARGS.contrastive:
         # Custom path: plain Trainer + masked NLL + unlikelihood loss.
         # SFTTrainer can't be used here because its forward pass computes a
